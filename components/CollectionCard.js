@@ -1,17 +1,33 @@
-
-import { connectMongoDB } from "@/lib/mongodb";
-import Collection from '@/models/collection'
+'use client'
 import Link from "next/link";
-// import { useState, useEffect } from "react";
-import useSWR from 'swr'
+import { useState, useEffect } from "react";
+import { signOut, useSession } from "next-auth/react"
 
-export default async function CollectionCard() {
-    // const fetcher = (...args) => fetch(...args).then((res) => res.json());
-    // const {data, error} = useSWR('api/collection', fetcher)
-    await connectMongoDB(); 
-    const data = await Collection.find();
-    console.log(data)
-    console.log(typeof(data[0]))
+
+export default function CollectionCard() {
+    const [data, setData] = useState([])
+    const [isLoading, setLoading] = useState(true)
+    const {data: session} = useSession();
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const response = await fetch('api/collection?' + new URLSearchParams({
+                    user_id: session?.user?.id,
+                }).toString(),{
+                    method: 'GET'
+                });
+                const result = await response.json()
+                setData(result)
+                setLoading(false)
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                setLoading(false);
+            }
+        }
+        fetchData()
+    
+    }, [])
 
     return (
         <div className="  w-auto shadow-lg m-12">
@@ -28,9 +44,8 @@ export default async function CollectionCard() {
                 </thead>
                 <tbody>
                     {
-
-                        data.map((row, i ) =>{
-                            return (<tr>
+                        data?.map((row, i ) => {
+                            return (<tr key={i}>
                                 <td className="px-4">{row.yarn_name}</td>
                                 <td className="px-4">{row.yarn_brand}</td>
                                 <td className="px-4">{row.yarn_lot}</td>
@@ -39,7 +54,7 @@ export default async function CollectionCard() {
                             </tr>)
                             
                         })
-                    }
+                        }
                 </tbody>
             </table>
             <div className="flex place-content-center">

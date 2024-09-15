@@ -23,18 +23,21 @@ export async function POST(req) {
     }
 }
 
-export async function GET(){
+export async function GET(request){
     try {
+        const searchParams = new URL (request.url)
+        const result = new URLSearchParams(searchParams.searchParams)
+        const user_id = result.get('user_id')
+
         await connectMongoDB()
-        const query = await Collection.find();
-        const collections = query.getFilter()
-        return NextResponse.json(
-            {collections}
-        )
+        const query = await Collection.find({user_id});
+        return NextResponse.json(query)
 
     } catch (error) {
         return NextResponse.json(
-            {message: "An error occurred while retrieving collections"},
+            {message: "An error occurred while retrieving collections",
+            error: error.message,
+            },
             {status: 500}
         )
     }
